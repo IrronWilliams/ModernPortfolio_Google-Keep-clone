@@ -12,7 +12,8 @@ class App {
       this.$notes = document.querySelector('#notes')              //used in displayNotes()
       this.$noteTitle = document.querySelector("#note-title") 
       this.$noteText = document.querySelector("#note-text") 
-      this.$formButtons = document.querySelector("#form-buttons") 
+      this.$formButtons = document.querySelector("#form-buttons")
+      this.$formCloseButton = document.querySelector('#form-close-button')
   
       this.addEventListeners()   //ensures method runs when app starts. 
     }
@@ -57,6 +58,23 @@ class App {
           this.addNote({ title, text })        //if hasNote true, then call addNote(). pass addNote with a single value, an object
         }
       }) 
+
+      /*making close button functional. created reference to button in constructor. listening for a click event and close app
+       
+      the app will not close with just this statement -> this.closeForm()
+      this.closeForm() is bubbling up and making the click event run into the click event handler for the body in adEventListeners(). 
+      the adEventListeners() method calls handleFormClick function. the logic/conditional within handleFormClick() keeps the app open 
+      if form is clicked.
+      
+      to fix this bubbling up issue, need to use another method on the event object. the method is stopPropagation(). this will stop 
+      the closeForm() event from propagating all the way up to the handler for the document body. this stops the bubbling up and allows
+      the close button to work as expected, close the app. propagate means to pass along to offspring. */
+      this.$formCloseButton.addEventListener('click', event => {
+        event.stopPropagation()
+        this.closeForm() //the app will not close without stopPropagation() 
+     })
+
+
     }
 
     /*using a target to determine if user clicked on form or not. to determine if target from event is within the 
@@ -68,9 +86,16 @@ class App {
     clicked outside of form, close form*/
     handleFormClick(event) {
       const isFormClicked = this.$form.contains(event.target) 
+
+      //adding title, text, hasNote variables to use in conditional. goal is to save notes when user clicks outside of form (w/o submit button)
+      const title = this.$noteTitle.value 
+      const text = this.$noteText.value 
+      const hasNote = title || text 
   
       if (isFormClicked) {
         this.openForm()       //if clicked within form, open form
+      } else if(hasNote) {
+        this.addNote({ title, text })  //if hasNote contains either title or text, pass in object with title, text. will add when user clicks outside of form
       } else {
         this.closeForm()     //if clicked outside of form, close form
       }
@@ -122,6 +147,7 @@ class App {
     notes and put newNote to add to end of array. since now copied array and created a new one, [...this.notes, newNote], can now 
     directly mutate the notes array  this.notes = [...this.notes, newNote] */  
 
+    /*  initial approach was to accept a single argument for addNote(). can apply destructuring  
     addNote(note) {     //receives an argument from the 'submit' event listener. argument is an object which contain results of title/text entered by user
       const newNote = {  //creating object to manage the notes data. assigning object to variable.  
         title: note.title,  //creating key/value pairs.  assigning key 'title' to value 'note.title' by using the argument passed into addNote()  
@@ -133,7 +159,26 @@ class App {
       //console.log(this.notes) //no longer logging notes. creating method displayNotes() to show notes on app   
       this.displayNotes()      //calling displayNotes method 
       this.closeForm()         //close form after adding notes  
-    }
+    } */
+
+    /*in handleFormClick() method, the note is provided as an object with properties title and text. can destructure note object and just get 
+    the title and text properties. instead of using note.title and note.text, and because the key and values have same name, can use 
+    object shorthand to create key/value pairs*/
+    addNote({title, text}) {     //receives argument from handleFormClick() method. destructuring object to get title/text properties. 
+    const newNote = {           //creating object to manage the notes data. assigning object to variable.  
+      title,                   //using object shorthand to create key/value pairs for title and text.    
+      text,
+      color: 'white',
+      id: this.notes.length > 0 ? this.notes[this.notes.length - 1].id + 1 : 1 //ternary to increment the id number by 1
+    } 
+    this.notes = [...this.notes, newNote]  //copying previous notes and adding new note to end of array. directly mutating notes array with = 
+    //console.log(this.notes) //no longer logging notes. creating method displayNotes() to show notes on app   
+    this.displayNotes()      //calling displayNotes method 
+    this.closeForm()         //close form after adding notes  
+  }
+
+
+
 
     /*when displaying notes, want to hide the placeholder "Notes you add appear here". to hide placeholder, can apply similar 
     approach used with the closeForm() method. if there are notes, hide placeholder (set display to none). otherwise if there are no 
