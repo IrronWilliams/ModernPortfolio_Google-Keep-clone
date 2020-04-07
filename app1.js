@@ -1,8 +1,3 @@
-    /*creating reference to html file (id="form") and css file (classes note-title and form-button)
-    the leading '$' tells javascript working with an HTML element as opposed to data. these statements are 
-    creating references to html and css files.  since references have been created, they can be used in the
-    class methods. */
-
 class App {
   constructor() {
     this.notes = []  //creating empty array. reference will allow for new notes from addNote() method to be added to array
@@ -10,7 +5,8 @@ class App {
     this.text = ''   //storing values of text from selectNote() method
     this.id = ''     //storing values of note id from selectNote() method
     
-    //reaching into DOM and creating references to html. references used in methods 
+    /*reaching into DOM and creating references to html & css. since references have been created, they can be used in the
+    class methods. the leading '$' tells javascript working with an HTML element as opposed to data. */
     this.$placeholder = document.querySelector("#placeholder") //used in displayNotes()
     this.$form = document.querySelector("#form") 
     this.$notes = document.querySelector("#notes")            //used in displayNotes()
@@ -22,6 +18,7 @@ class App {
     this.$modalTitle = document.querySelector(".modal-title")       //selecting special class modal-title from css file
     this.$modalText = document.querySelector(".modal-text")         //selecting special class modal-text from css file
     this.$modalCloseButton = document.querySelector('.modal-close-button') 
+    this.$colorTooltip = document.querySelector('#color-tooltip')
 
     this.addEventListeners() //ensures method runs when app starts. 
   }
@@ -36,6 +33,13 @@ class App {
       this.selectNote(event) 
       this.openModal(event) 
     }) 
+
+    /*goal is to provide user with option to hover over the pallet icon which displays a tooltip, where user can select a color for 
+    the note. to accomplish this need to use a mouse event. take the document body and add the mouseover event. pass event to a new
+    function openTooltip() which will receive the event.  */
+    document.body.addEventListener('mouseover', event => {
+      this.openTooltip(event)
+    })
 
     /*listen for a submit event on the form by referencing $this.form. listen for submit button or hitting enter key.
         
@@ -169,15 +173,67 @@ class App {
      }
   }
   
-  /*closeModal() does 2 things; closes the modal and edits the appropriate to-do in the same process. 
-
-  to begin, reference a new function editNote() and add it after addNote()
-  
-  to close modal, do opposite of adding the open-modal class, so can reuse line from openModal(). function is now toggling to 
+  /*closeModal() does 2 things; closes the modal and edits the appropriate to-do in the same process. method references a new function 
+  editNote().  to close modal, do opposite of adding the open-modal class, so can reuse line from openModal(). function is now toggling to 
   where the open-modal class no longer exists. */
   closeModal(event) {
      this.editNote()  
      this.$modal.classList.toggle('open-modal') 
+  }
+
+  /*openTooltip() receives event from the mouseover event. only want to open tooltip when user hovers over the pallet. on the dynamic 
+  html file created in displayNotes(), the pallet icon has a class of toolbar-color. so want to make sure if user is not hovering over
+  toolbar-color, want to return from the function and don't do anything.  
+    <img class="toolbar-color" src="https://icon.now.sh/palette">
+  
+  to accomplish this, use the matches() method from event.target.matches by making sure it matches the element class toolbar-color. 
+
+  similar to the approach with selectNote() method, used the dataset attribute to get the id of the selected note. now user will be 
+  hovering over the note. to get the hovering data, check the displayNotes() method to see what we have for each note. the approach 
+  will be to add another data id to toolbar-color (easiest approach). or use the existing data-id on the note itself. can obtain this 
+  value from the event by using a property nextElementSibling: event.target.nextElementSibling. this will return the note div itself.
+  from this, can access the dataset property and from that the id.  this allows me to get the id again and put it in the constructor.
+  
+  but still need a little more info. need to know exactly where in the page the note is. regardless of how screen changes, say in width,
+  want to make sure the tooltip is always above the pallet. to detect this, can use the event target to see where the user is hovering 
+  over and use special property getBoundingClientRect(). this will provide specific info about the coordinates of where the user is 
+  hovering over the note. can put this data in a new variable called notesCoords. to calculate this, need to know how much the user has 
+  scrolled down the page. to determine where to put the tooltip, need to put the horizontal value by taking the noteCoords.left property
+  and adding it to the scrollX position. scrollX will tell me how much the user has scrolled in the x (horizontal) direction. 
+  to determine where to put the tooltip vertically, take the noteCoords.top property and add that to the scrollY position. scrollY tells 
+  me how much the user has scrolled (vertically) in the y direction. now that i have a set of horizontal and vertical values, want to 
+  use values as pixels for this.$colorTooltip with the style property: 
+    this.$colorTooltip.style.transform   -> this will change the position of the tooltip to wherever the user hovers over, if they are
+    actually hovering over the pallet via  if (!event.target.matches('.toolbar-color')). 
+  
+  will use translate to interpolate the values for horizontal pixels and vertical pixels: 
+    this.$colorTooltip.style.transform = `translate(${horizontal}px, ${vertical}px)`
+  
+  display tooltip by setting another style property display to flex:
+    this.$colorTooltip.style.display = 'flex';
+
+  need to update the html file by creating the tooltip and possible color options. add a div with id color-tooltip. this div will consist
+  of 4 child divs. will have the class color-option and will include info on another data attribute called data-color. the 1st option 
+  will be for the color white (hex code #fff) and give it id white. add 3 more divs for colors purple, orange and teal. these are the
+  colors user will select form pallet. the styles for the colors are in css files. 
+
+  need to create a reference to tooltip in constructor: this.$colorTooltip
+  
+    
+  
+  */
+  openTooltip(event) {
+    if (!event.target.matches('.toolbar-color')) return //if user is not hovering over pallet do not do anything. 
+    this.id = event.target.nextElementSibling.dataset.id   //accessing id from dataset property 
+    const noteCoords = event.target.getBoundingClientRect() //provides info about the coordinates of where the user is hovering
+    const horizontal = noteCoords.left + window.scrollX  // tell me how much the user has scrolled in the x (horizontal) direction
+    const vertical = noteCoords.top + window.scrollY    //tell me how much the user has scrolled in the y (vertical) direction
+    this.$colorTooltip.style.transform = `translate(${horizontal}px, ${vertical}px)`//changes tooltip position to where user hovering and using translate to interpolate the values for horizontal/vertical pixels  
+    this.$colorTooltip.style.display = 'flex'  //displaying tooltip
+
+
+
+
   }
 
   /*within addNote() function, just have a single parameter entitled 'note'. the note parameter receives its value from the object 
