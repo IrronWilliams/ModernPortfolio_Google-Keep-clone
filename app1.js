@@ -33,6 +33,7 @@ class App {
       this.handleFormClick(event) 
       this.selectNote(event) 
       this.openModal(event) 
+      this.deleteNote(event)
     }) 
 
     /*goal is to provide user with option to hover over the pallet icon which displays a tooltip, where user can select a color for 
@@ -207,6 +208,7 @@ class App {
   to this.title and this.text respectively.*/
 
   openModal(event) {
+     if (event.target.matches('.toolbar-delete')) return //if target does match toolbar-delete element, do not open modal. this prevents modal from opening after user deletes note
      if (event.target.closest('.note')) {
         this.$modal.classList.toggle('open-modal')   
         this.$modalTitle.value = this.title 
@@ -365,8 +367,7 @@ class App {
   call method displayNotes() to display them. 
   
   using this approach, can use following statement in openTooltip() method to get the note id:
-    this.id = event.target.nextElementSibling.dataset.id   //accessing id from dataset property (approach 1)
-  */
+    this.id = event.target.nextElementSibling.dataset.id   //accessing id from dataset property (approach 1)*/
 
   editNote() {
      const title = this.$modalTitle.value 
@@ -436,6 +437,31 @@ class App {
      this.id = $selectedNote.dataset.id 
   }
 
+  /*deleteNote() 
+  adding stopPropagation() to stop the 'bubbling' up when user hovers over trash can, to modal opens. to click on the trashcan icon, 
+  want to see if the event target matches the toolbar-delete class. this is the class for the icon in the dynamic html in displayNotes(),
+  if not a match, return from function and do nothing. 
+    <img class="toolbar-delete" src="https://icon.now.sh/delete">
+  
+  putting the data attribute directly on the dynamic html will get the note id for each note: 
+    img class="toolbar-delete" src="https://icon.now.sh/delete">  (prior update)
+    img class="toolbar-delete" data-id=${note.id} src="https://icon.now.sh/delete"> (post update)
+    
+  to delete a selected note, need to know its id. can provide the data-id attribute to it, and set it equal to a local id variable:  
+    const id = event.target.dataset.id. 
+  
+  since i want to change the number of notes in the array, can use the filter method since it allows to filter based on a condition. 
+  take each note and filter on the condition that given notes id is not equal to the id. so this returns every note except for the note
+  with the selected id. need to convert id to a number because being stored as a string in the DOM. then update the notes array in the 
+  constructor with = sign. finally display notes.*/
+  deleteNote(event) {
+    event.stopPropagation()   
+    if (!event.target.matches('.toolbar-delete')) return  //if user does not click on trashcan, do nothing
+    const id = event.target.dataset.id   //getting notes id by providing data-id attribute to the target user clicks. 
+    this.notes = this.notes.filter(note => note.id !== Number(id)) //returns array with every note except for note user selected, then update notes array in constructor.  
+    this.displayNotes()
+  }
+
   /*displayNotes()
   when displaying notes, want to hide the placeholder "Notes you add appear here". to hide placeholder, can apply similar 
   approach used with the closeForm() method. if there are notes, hide placeholder (set display to none). otherwise if there are no 
@@ -488,7 +514,7 @@ class App {
           <div class="toolbar-container">
             <div class="toolbar">
               <img class="toolbar-color" data-id=${note.id} src="https://icon.now.sh/palette">
-              <img class="toolbar-delete" src="https://icon.now.sh/delete">
+              <img class="toolbar-delete" data-id=${note.id} src="https://icon.now.sh/delete">
             </div>
           </div>
         </div>
