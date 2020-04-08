@@ -23,10 +23,11 @@ class App {
     this.addEventListeners() //ensures method runs when app starts. 
   }
 
-   /*the addEventListeners() method adds event listeners to each element in order to register different events.
-    adding an event listener on the body. listening for a click event. click event will return data. passing in a string
-    argument 'event' and a callback function that determines what should happen when event occurs. 
-    1st event is to address what to do when the form is clicked. the steps can be managed with another method (handleFormClick).*/  
+   /*addEventListeners()
+  the addEventListeners() method adds event listeners to each element in order to register different events.
+  adding an event listener on the body. listening for a click event. click event will return data. passing in a string
+  argument 'event' and a callback function that determines what should happen when event occurs. 
+  1st event is to address what to do when the form is clicked. the steps can be managed with another method (handleFormClick).*/  
   addEventListeners() {
     document.body.addEventListener("click", event => {
       this.handleFormClick(event) 
@@ -40,6 +41,43 @@ class App {
     document.body.addEventListener('mouseover', event => {
       this.openTooltip(event)
     })
+
+    /*mouseout event to close Tooltip */
+    document.body.addEventListener('mouseout', event => {
+      this.closeTooltip(event)
+   })
+
+    /*to keep colorToolTip open to allow user to hover over the colors within the pallet.......
+    instead of using an arrow function to pass event to another function handler, want to get a reference to the colorTooltip itself
+    and keep it open. with DOM event handler, can use a function declaration (do not need the event). to refer to the colorTooltip can 
+    use 'this'. since using a function declaration, the 'this' keyword refers to the element that i want. in this code, 'this' is 
+    referencing the colorTooltip html element. function declarations have their own 'this'. arrow functions do not have their own 'this'.  
+    arrow functions have a lexical 'this'. using an arrow function, the 'this' will refer to the outer scope.  
+    
+    set its style, mainly its display property to 'flex'. this will keep colorTooltip open when user mouses over it.*/
+    this.$colorTooltip.addEventListener('mouseover', function() {
+      this.style.display = 'flex' 
+    })
+
+   /*to hide the colorToolTip when user mouseout/leaves the colorTooltip.*/
+   this.$colorTooltip.addEventListener('mouseout', function() {
+     this.style.display = 'none'  
+   })
+
+   /*allow user to change color from pallet and change the background color for the note.....
+   adding to colorTooltip a click event using an arrow functions. for each of the colors, providing a 'data-color' attribute (html file).   
+   can get the attribute from the event with a target and put in a color variable:
+    const color = event.target.dataset.color
+   
+   if there is a string color, then call a function that edits the note color. execute a function called editNoteColor(color) and pass
+   color. 
+   */
+   this.$colorTooltip.addEventListener('click', event => {
+    const color = event.target.dataset.color 
+    if (color) {
+      this.editNoteColor(color)
+    }   
+   })
 
     /*listen for a submit event on the form by referencing $this.form. listen for submit button or hitting enter key.
         
@@ -91,13 +129,14 @@ class App {
       this.closeForm() //the app will not close without stopPropagation() 
     }) 
 
-    /*adding event listener for click event for close button on modal. */
+    /*adding event listener for click event to close button on modal. */
     this.$modalCloseButton.addEventListener('click', event => {
       this.closeModal(event)   
     })
   }
 
-  /*using a target to determine if user clicked on form or not. to determine if target from event is within the 
+  /*handleFormClick()
+  using a target to determine if user clicked on form or not. to determine if target from event is within the 
   form, dive into the DOM (in constructor) and search for the form element  using documents.querySelector(#form).
   
   once reference to this.$form (via constructor) has been established, can check to see if user 'clicked' within the form by 
@@ -122,7 +161,8 @@ class App {
     }
   }
 
-  /*creating a method on class to open the form. within styles.css have a special class called 'form open'  which will toggle the change
+  /*openForm()
+  creating a method on class to open the form. within styles.css have a special class called 'form open'  which will toggle the change
   of appearance between when app opens and when app closes. also updating html to display the note title 
   (css file for these classes are marked display:none).
   
@@ -130,14 +170,14 @@ class App {
 
   since now have access to tile and buttons, can make the note titles and buttons visible by setting the styles of 
   note-title and form-button to display on page (display=block).*/
-
   openForm() {
     this.$form.classList.add("form-open") //add class to form
     this.$noteTitle.style.display = "block" 
     this.$formButtons.style.display = "block" 
   }
 
-  /* to close form when user clicks away, reverse back to form state. to begin, remove the class from the form.
+  /*closeForm()
+  to close form when user clicks away, reverse back to form state. to begin, remove the class from the form.
   then set display properties to none to hide the note titles and form buttons.*/
   closeForm() {
     this.$form.classList.remove("form-open") //remove class from form
@@ -147,7 +187,8 @@ class App {
     this.$noteText.value = "" 
   }
   
-  /*creating openModel() method. goal is to allow user to select a note and make changes. will make use of another method off of 
+  /*openModal()
+  creating openModel() method. goal is to allow user to select a note and make changes. will make use of another method off of 
   event.target called closest, ie event.target.closest. want to find whether the targeted element with the click was closest to the note. 
   looking at each of the notes being displayed in the displayNotes() method (<div style="background: ${note.color} " class="note">), 
   giving each note the class note. so if user clicks closest to the element with the class note, the the user is clicking on it. 
@@ -173,7 +214,8 @@ class App {
      }
   }
   
-  /*closeModal() does 2 things; closes the modal and edits the appropriate to-do in the same process. method references a new function 
+  /*closeModal()
+  closeModal() does 2 things; closes the modal and edits the appropriate to-do in the same process. method references a new function 
   editNote().  to close modal, do opposite of adding the open-modal class, so can reuse line from openModal(). function is now toggling to 
   where the open-modal class no longer exists. */
   closeModal(event) {
@@ -181,7 +223,8 @@ class App {
      this.$modal.classList.toggle('open-modal') 
   }
 
-  /*openTooltip() receives event from the mouseover event. only want to open tooltip when user hovers over the pallet. on the dynamic 
+  /*openTooltip()
+  openTooltip() receives event from the mouseover event. only want to open tooltip when user hovers over the pallet. on the dynamic 
   html file created in displayNotes(), the pallet icon has a class of toolbar-color. so want to make sure if user is not hovering over
   toolbar-color, want to return from the function and don't do anything.  
     <img class="toolbar-color" src="https://icon.now.sh/palette">
@@ -217,26 +260,28 @@ class App {
   will be for the color white (hex code #fff) and give it id white. add 3 more divs for colors purple, orange and teal. these are the
   colors user will select form pallet. the styles for the colors are in css files. 
 
-  need to create a reference to tooltip in constructor: this.$colorTooltip
-  
-    
-  
-  */
+  need to create a reference to tooltip in constructor: this.$colorTooltip  */
   openTooltip(event) {
     if (!event.target.matches('.toolbar-color')) return //if user is not hovering over pallet do not do anything. 
-    this.id = event.target.nextElementSibling.dataset.id   //accessing id from dataset property 
+    //this.id = event.target.nextElementSibling.dataset.id   //accessing id from dataset property (approach 1)
+    this.id = event.target.dataset.id                      //accessing id from dataset property (approach 2) 
     const noteCoords = event.target.getBoundingClientRect() //provides info about the coordinates of where the user is hovering
     const horizontal = noteCoords.left + window.scrollX  // tell me how much the user has scrolled in the x (horizontal) direction
-    const vertical = noteCoords.top + window.scrollY    //tell me how much the user has scrolled in the y (vertical) direction
+    const vertical = noteCoords.top + window.scrollY   //tell me how much the user has scrolled in the y (vertical) direction. 
     this.$colorTooltip.style.transform = `translate(${horizontal}px, ${vertical}px)`//changes tooltip position to where user hovering and using translate to interpolate the values for horizontal/vertical pixels  
     this.$colorTooltip.style.display = 'flex'  //displaying tooltip
-
-
-
-
   }
 
-  /*within addNote() function, just have a single parameter entitled 'note'. the note parameter receives its value from the object 
+  /*closeTooltip()
+  similar to openTooltip() if not hovering over pallet, return nothing. otherwise take the colorTooltip and hide it by setting its
+  display property to none. when user moves away from tooltip, it will disappear.  */
+  closeTooltip(event) {
+    if (!event.target.matches('.toolbar-color')) return
+    this.$colorTooltip.style.display = 'none' 
+  }
+
+  /*addNote()
+  within addNote() function, just have a single parameter entitled 'note'. the note parameter receives its value from the object 
   created in the submit event listener. the best way to work with the note data from the app is an array, which will allow for much 
   flexibility to use different array methods. 1st step is to create an array in the constructor. 
   this array will start with an empty array for the notes. 
@@ -289,7 +334,8 @@ class App {
     this.closeForm()    //close form after adding notes
   }
   
-  /*editNote() does not need anything passed to it because all of the value that user will be updating are notes that are already
+  /*editNote() 
+  does not need anything passed to it because all of the value that user will be updating are notes that are already
   in inputs this.$modalTitle.value and this.$modalText.value.  
 
   want this function to go accomplish following: 
@@ -316,7 +362,11 @@ class App {
   note.id to a string. better to compare numbers, although either approach works, so convert this is to a number. 
 
   now want to use the new array returned from map() to update the notes array in the constructor. after editing notes, want to 
-  call method displayNotes() to display them. */
+  call method displayNotes() to display them. 
+  
+  using this approach, can use following statement in openTooltip() method to get the note id:
+    this.id = event.target.nextElementSibling.dataset.id   //accessing id from dataset property (approach 1)
+  */
 
   editNote() {
      const title = this.$modalTitle.value 
@@ -327,7 +377,25 @@ class App {
      this.displayNotes() 
   }
   
-  /*when the modal is opened, want to have the modal populated with the appropriate title and text data. need to take the note the user
+  /*editNoteColor()
+  want to iterate over the notes, find the note according to its id, and update its color value on the color property.   
+  applied a similar approach with the editNote() function. using the nextElementSibling property will not return the correct note 
+  id. an alternate way of finding the id is to put the data-id directly on the 'toolbar-color' and get its value by setting note.id
+  onto it. From the dynamic html from displayNotes() 
+    <img class="toolbar-color" src="https://icon.now.sh/palette">  (prior update) 
+    <img class="toolbar-color" data-id=${note.id} src="https://icon.now.sh/palette">  (post update)
+  
+  using this approach, can use following statement in openTooltip() method to get the note id:
+    this.id = event.target.dataset.id    //accessing id from dataset property (approach 2) */
+  editNoteColor(color) {
+    this.notes = this.notes.map(note =>
+      note.id === Number(this.id) ? { ...note, color } : note
+    )
+    this.displayNotes()
+  }
+
+  /*selectNote()
+  when the modal is opened, want to have the modal populated with the appropriate title and text data. need to take the note the user
   clicked and provide that data to the modal's input value properties. 1st step to accomplish this is to update the document body 
   click event handler (addEventListener) and add a reference to another function entitled selectNote()
 
@@ -368,7 +436,8 @@ class App {
      this.id = $selectedNote.dataset.id 
   }
 
-  /*when displaying notes, want to hide the placeholder "Notes you add appear here". to hide placeholder, can apply similar 
+  /*displayNotes()
+  when displaying notes, want to hide the placeholder "Notes you add appear here". to hide placeholder, can apply similar 
   approach used with the closeForm() method. if there are notes, hide placeholder (set display to none). otherwise if there are no 
   notes, show the placeholder (set display to flex). 
 
@@ -418,7 +487,7 @@ class App {
           <div class="note-text">${note.text}</div>
           <div class="toolbar-container">
             <div class="toolbar">
-              <img class="toolbar-color" src="https://icon.now.sh/palette">
+              <img class="toolbar-color" data-id=${note.id} src="https://icon.now.sh/palette">
               <img class="toolbar-delete" src="https://icon.now.sh/delete">
             </div>
           </div>
