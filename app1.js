@@ -1,6 +1,7 @@
 class App {
   constructor() {
-    this.notes = []  //creating empty array. reference will allow for new notes from addNote() method to be added to array
+    //this.notes = []  //creating empty array. reference will allow for new notes from addNote() method to be added to array. used prior to adding localStorage functionality. 
+    this.notes = JSON.parse(localStorage.getItem('notes')) || []  //details/explanation explained in saveNotes() method
     this.title = ''  //storing values of title from selectNote() method
     this.text = ''   //storing values of text from selectNote() method
     this.id = ''     //storing values of note id from selectNote() method
@@ -20,6 +21,7 @@ class App {
     this.$modalCloseButton = document.querySelector('.modal-close-button') 
     this.$colorTooltip = document.querySelector('#color-tooltip')
 
+    this.render()  //need here to display the initial notes available on the notes property in the displayNotes() method
     this.addEventListeners() //ensures method runs when app starts. 
   }
 
@@ -332,7 +334,8 @@ class App {
     } 
     this.notes = [...this.notes, newNote] //copying previous notes and adding new note to end of array. directly mutating notes array with = 
     //console.log(this.notes) //no longer logging notes. creating method displayNotes() to show notes on app   
-    this.displayNotes()   //calling displayNotes method 
+    //this.displayNotes()   //calling displayNotes method. replacing to use render()
+    this.render()
     this.closeForm()    //close form after adding notes
   }
   
@@ -375,7 +378,8 @@ class App {
      this.notes = this.notes.map(note => 
        note.id === Number(this.id) ? { ...note, title, text } : note
      ) 
-     this.displayNotes() 
+     //this.displayNotes() //replacing with render()
+     this.render()
   }
   
   /*editNoteColor()
@@ -392,7 +396,8 @@ class App {
     this.notes = this.notes.map(note =>
       note.id === Number(this.id) ? { ...note, color } : note
     )
-    this.displayNotes()
+    //this.displayNotes() //replacing with render()
+    this.render()
   }
 
   /*selectNote()
@@ -459,9 +464,51 @@ class App {
     if (!event.target.matches('.toolbar-delete')) return  //if user does not click on trashcan, do nothing
     const id = event.target.dataset.id   //getting notes id by providing data-id attribute to the target user clicks. 
     this.notes = this.notes.filter(note => note.id !== Number(id)) //returns array with every note except for note user selected, then update notes array in constructor.  
+    //this.saveNotes()  //using a single function in place of this. putting in a method called render() which will be responsible for calling method every time.  
+    //this.displayNotes()  //using a single function in place of this. putting in a method called render() which will be responsible for calling method every time. 
+    this.render()
+  }
+
+
+  /*render()
+  stores the functions saveNotes() and displayNotes(). every time these methods need to be called, just call render(). update app for all 
+  occurrences of displayNotes(), replace with render(). this saves trouble of updating each method individually when there is a change 
+  to displayNotes()*/
+  render() {
+    this.saveNotes()
     this.displayNotes()
   }
 
+  /*saveNotes()
+  adding persistance so that whenever a user adds a note, notes will stick around even after page refresh. saveNotes() will put 
+  current notes in local storage. this can be done by using localStorage property and putting in a key value pair, where key is set to 
+  notes and the value is this.notes. 
+    localStorage.setItem('notes', this.notes)
+
+  to store a value in local storage, need to turn it into a string. the best way to turn an object into a string is to use JSON.stringify.  
+  one this is done, can create a method called render().
+  
+  now that notes being saved to localStorage, need a way to get them out of browser and use them to initialize the notes array in the 
+  constructor. within constructor, update 'this.notes' by getting notes.  this will return a string. need to return back to an array.
+  can do this by using the opposite of JSON.stringify, JSON.parse
+    this.notes = localStorage.getItem('notes') 
+  
+  JSON.parse is the opposite of JSON.stringify. this converts string to an array: 
+    this.notes = JSON.parse(localStorage.getItem('notes'))
+    with this statement, if there are any notes stores in the browser, they will be put on the notes property. 
+    
+  if there are no notes, want to use an empty array as used previously. need a conditional that puts existing notes in the notes property
+  or if no notes are stored in the browser, use an empty array. can use the or || operator to write a short circuiting statement. 
+  if there are notes/if localStorage.getItem('notes') is a truthy value, put the results of JSON.parse in the notes property. otherwise, 
+  if its falsey, put an empty array immediately in notes property. 
+
+  this additional functionality will allow the notes to remain on the page even after page refresh. prior to localStorage, the notes
+  will be removed from the page. */
+
+ saveNotes() {
+  localStorage.setItem('notes', JSON.stringify(this.notes)) // converting object to string, storing info to local storage.
+  }
+  
   /*displayNotes()
   when displaying notes, want to hide the placeholder "Notes you add appear here". to hide placeholder, can apply similar 
   approach used with the closeForm() method. if there are notes, hide placeholder (set display to none). otherwise if there are no 
